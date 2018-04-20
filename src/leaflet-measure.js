@@ -22,7 +22,8 @@ L.Control.Measure = L.Control.extend({
         this._map = map;
         this._measureArea = this.options.measureArea;
         this._layer = L.layerGroup().addTo(this._map);
-        this._container = L.DomUtil.create('div', this._className + ' leaflet-bar');
+        this._container = L.DomUtil.create('div',
+            this._className + ' leaflet-bar');
         if (this.options.createButton){
             this._createButton(
                 '&#8674;', 'Measure',
