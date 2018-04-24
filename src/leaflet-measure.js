@@ -15,6 +15,9 @@ L.Control.Measure = L.Control.extend({
         measureUnit: 'meters',
         measureArea: false
     },
+    getMeasureUnit(){
+        return units[this.options.measureUnit]
+    },
     initialize: function(options) {
         L.setOptions(this, options);
     },
@@ -65,6 +68,9 @@ L.Control.Measure = L.Control.extend({
     },
     _initLayout: function() {
 
+    },
+    removeMeasure: function(layer){
+        this._layer.removeLayer(layer)
     },
     setMeasureArea: function(measureArea) {
         this._measureArea = measureArea;
@@ -150,15 +156,17 @@ L.Control.Measure = L.Control.extend({
         }
 
         if (this._tooltipTemp && !this._measureArea) {
-            this._updateTooltipPosition(this._tooltipTemp, e.latlng);
+            this._setTooltipPosition(this._tooltipTemp, e.latlng);
             const distance = e.latlng.distanceTo(this._lastPoint);
             let oldDistance = 0;
             if (this._layerPath){
                 oldDistance = calc(
                     this._layerPath.getLayers()[0]._latlngs).length;
             }
-            this._updateTooltipDistance(
-                this._tooltipTemp, oldDistance + distance, distance);
+            this.updateTooltipDistance(this._tooltipTemp,
+                this._roundValue(oldDistance + distance),
+                this._roundValue(distance)
+            );
         }
     },
     _mouseMoveArea: function(e) {
@@ -167,9 +175,10 @@ L.Control.Measure = L.Control.extend({
             points.push(e.latlng);
             this._layerAreaTemp.getLayers()[0].setLatLngs(points);
             if (this._tooltipTemp) {
-                this._updateTooltipPosition(this._tooltipTemp, e.latlng);
-                const measures = calc(points);
-                this._updateTooltipArea(this._tooltipTemp, measures.area);
+                this._setTooltipPosition(this._tooltipTemp, e.latlng);
+                const measure = calc(points, true);
+                const info = this.measureToUnits(measure)
+                this.updateTooltipArea(this._tooltipTemp, info.area);
             }
         }
     },
@@ -196,11 +205,13 @@ L.Control.Measure = L.Control.extend({
             if (!this._measureArea){
                 const oldDistance = calc(path._latlngs).length;
                 path.addLatLng(e.latlng);
-                const newDistance = calc(path._latlngs).length;
-                const difference = newDistance - oldDistance;
+                let newDistance = calc(path._latlngs).length;
+                let difference = newDistance - oldDistance;
                 const tooltip = this._createTooltip(
                     e.latlng, this._layerPath);
-                this._updateTooltipDistance(
+                newDistance = this._roundValue(newDistance);
+                difference = this._roundValue(difference);
+                this.updateTooltipDistance(
                     tooltip, newDistance, difference);
             }else{
                 path.addLatLng(e.latlng);
@@ -273,12 +284,25 @@ L.Control.Measure = L.Control.extend({
                 );
                 const tooltip = this._createTooltip(
                     tooltipPosition, layerAreaGrp).addTo(this._layer);
-                this._updateTooltipArea(tooltip, calc(this._points).area);
-                this._map.fire('measure:finishedpath', { layer: layerAreaGrp});
+                const measure = calc(this._points, true)
+                const info = this.measureToUnits(measure)
+                this.updateTooltipArea(tooltip, info.area);
+                const data = {
+                    layer: layerAreaGrp,
+                    type: 'area',
+                    measure: info
+                }
+                this._map.fire('measure:finishedpath', {measure: data});
             }
         }else{
             if (this._layerPath) {
-                this._map.fire('measure:finishedpath', { layer: this._layerPath});
+                const info = this.measureToUnits(calc(this._points))
+                const data = {
+                    layer: this._layerPath,
+                    type: 'path',
+                    measure: info
+                }
+                this._map.fire('measure:finishedpath', {measure: data});
             }
         }
         this._restartPath();
@@ -308,43 +332,51 @@ L.Control.Measure = L.Control.extend({
         }
         this._restartPath();
     },
-    _updateTooltipPosition: function(tooltip, position) {
+    _setTooltipPosition: function(tooltip, position) {
         tooltip.setLatLng(position);
     },
-    _updateTooltipDistance: function(tooltip, total, difference) {
-
-        const measureUnit = units[this.options.measureUnit];
-        const totalRound = (total * measureUnit.factor).toLocaleString(
-            undefined, {
-                minimumFractionDigits: measureUnit.decimals,
-                maximumFractionDigits: measureUnit.decimals
-            });
-        const differenceRound = (difference * measureUnit.factor
-        ).toLocaleString(undefined, {
-            minimumFractionDigits: measureUnit.decimals,
-            maximumFractionDigits: measureUnit.decimals
-        });
-
+    updateTooltipArea: function(tooltip, area) {
+        const units = this.getMeasureUnit().display;
         let text = '<div class="leaflet-measure-tooltip-total">';
-        text += totalRound + measureUnit.display + '</div>';
-        if (differenceRound > 0 && totalRound != differenceRound) {
+        text += area + ' ' + units + '<sup>2</sup>';
+        text += '</div>';
+        tooltip._icon.innerHTML = text;
+    },
+    updateTooltipDistance: function(tooltip, total, difference) {
+        const units = this.getMeasureUnit().display;
+        let text = '<div class="leaflet-measure-tooltip-total">';
+        text += ' ' + total + ' ' + units + '</div>';
+        if (difference > 0 && total != difference) {
             text += '<div class="leaflet-measure-tooltip-difference">(+';
-            text += differenceRound + measureUnit.display + ')</div>';
+            text += difference + ' ' + units + ')</div>';
         }
         tooltip._icon.innerHTML = text;
     },
-    _updateTooltipArea: function(tooltip, area) {
-        const measureUnit = units[this.options.measureUnit];
-        const totalRound = (area * measureUnit.factor).toLocaleString(
+    measureToUnits:function(measure) {
+        const measureUnit = this.getMeasureUnit();
+        const pathTotalRound = this._roundValue(
+            measure.length * measureUnit.factor);
+        let areaTotalRound = null
+        if (measure.area){
+            areaTotalRound = this._roundValue(
+                measure.area * measureUnit.factor);
+        }
+        return {
+            length_ori: measure.length,
+            area_ori: measure.area,
+            units: this.options.measureUnit,
+            units_desc: measureUnit.display,
+            length: pathTotalRound,
+            area: areaTotalRound,
+        };
+    },
+    _roundValue: function(value) {
+        const decimals = this.getMeasureUnit().decimals;
+        return value.toLocaleString(
             undefined, {
-                minimumFractionDigits: measureUnit.decimals,
-                maximumFractionDigits: measureUnit.decimals
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
             });
-        let text = '<div class="leaflet-measure-tooltip-total">';
-        text += totalRound;
-        text += measureUnit.display + '<sup>2</sup>';
-        text += '</div>';
-        tooltip._icon.innerHTML = text;
     },
     _onKeyDown: function(e) {
         if (e.keyCode == 27) {
