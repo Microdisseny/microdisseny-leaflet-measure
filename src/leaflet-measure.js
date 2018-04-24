@@ -274,11 +274,12 @@ L.Control.Measure = L.Control.extend({
                 const tooltip = this._createTooltip(
                     tooltipPosition, layerAreaGrp).addTo(this._layer);
                 this._updateTooltipArea(tooltip, calc(this._points).area);
+                this._map.fire('measure:finishedpath', { layer: layerAreaGrp});
             }
-            this._map.fire('measure:finishedpath', { layer: layerAreaGrp});
-        }
-        if (this._layerPath) {
-            this._map.fire('measure:finishedpath', { layer: this._layerPath});
+        }else{
+            if (this._layerPath) {
+                this._map.fire('measure:finishedpath', { layer: this._layerPath});
+            }
         }
         this._restartPath();
     },
