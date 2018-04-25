@@ -284,8 +284,7 @@ L.Control.Measure = L.Control.extend({
                 this.updateTooltipArea(tooltip, info.area);
                 const data = Object.assign({
                     layer: layerAreaGrp,
-                    type: 'area',
-                    measure: info
+                    type: 'area'
                 }, info);
                 this.measures.push(data);
                 data.layer.on('remove', this._removeMeasure, this);
