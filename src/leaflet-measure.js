@@ -22,6 +22,7 @@ L.Control.Measure = L.Control.extend({
         L.setOptions(this, options);
     },
     onAdd: function(map) {
+        this.measures = [];
         this._map = map;
         this._measureArea = this.options.measureArea;
         this._layer = L.layerGroup().addTo(this._map);
@@ -65,12 +66,6 @@ L.Control.Measure = L.Control.extend({
         });
         layer.addLayer(tooltip);
         return tooltip;
-    },
-    _initLayout: function() {
-
-    },
-    removeMeasure: function(layer){
-        this._layer.removeLayer(layer)
     },
     setMeasureArea: function(measureArea) {
         this._measureArea = measureArea;
@@ -287,25 +282,36 @@ L.Control.Measure = L.Control.extend({
                 const measure = calc(this._points, true)
                 const info = this.measureToUnits(measure)
                 this.updateTooltipArea(tooltip, info.area);
-                const data = {
+                const data = Object.assign({
                     layer: layerAreaGrp,
                     type: 'area',
                     measure: info
-                }
+                }, info);
+                this.measures.push(data);
+                data.layer.on('remove', this._removeMeasure, this);
                 this._map.fire('measure:finishedpath', {measure: data});
             }
         }else{
             if (this._layerPath) {
                 const info = this.measureToUnits(calc(this._points))
-                const data = {
+                const data = Object.assign({
                     layer: this._layerPath,
                     type: 'path',
-                    measure: info
-                }
+                }, info);
+                data.layer.on('remove', this._removeMeasure, this);
+                this.measures.push(data);
                 this._map.fire('measure:finishedpath', {measure: data});
             }
         }
         this._restartPath();
+    },
+    _removeMeasure: function(e){
+        let i;
+        for(i in this.measures){
+            if (this.measures[i].layer == e.target){
+                this.measures.splice(i, 1)
+            }
+        }
     },
     _restartPath: function() {
         this._points = [];
