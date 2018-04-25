@@ -1,11 +1,11 @@
 {
   "name": "microdisseny-leaflet-measure",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "description": "Measure control for Leaflet maps",
   "main": "dist/leaflet-measure.js",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/Microdisseny/microdisseny-leaflet-measure.git"
   },
   "keywords": [
     "leaflet",
