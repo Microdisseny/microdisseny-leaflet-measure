@@ -65,7 +65,8 @@
         var map = new L.Map('map').addLayer(osm).setView(new L.LatLng(41.9794, 2.8214), 19);
         window.map = map;
         var measureControl = new L.Control.Measure({
-            measureUnit: 'meters'
+            measureUnit: 'meters',
+            createButton: false
         });
         measureControl.addTo(map);
         window.measureControl = measureControl;
