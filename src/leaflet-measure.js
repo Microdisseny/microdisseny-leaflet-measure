@@ -34,6 +34,9 @@ L.Control.Measure = L.Control.extend({
                 'leaflet-control-measure leaflet-bar-part ' +
                 'leaflet-bar-part-top-and-bottom', this._container,
                 this.toggleMeasure, this);
+        }else{
+            this._container = L.DomUtil.create('div',
+                this._className + '-disabled');
         }
         return this._container;
     },
