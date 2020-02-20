@@ -4,7 +4,8 @@ export default {
         weight: 2,
         clickable: false,
         dashArray: '6,3',
-        fill: false
+        fill: false,
+        className: 'inherit-cursor'
     },
     measurePath: {
         clickable: false,
@@ -19,7 +20,8 @@ export default {
         opacity: 0,
         fill: true,
         fillOpacity: 0.3,
-        clickable: false
+        clickable: false,
+        className: 'inherit-cursor'
     },
     measureArea: {
         color: 'blue',
