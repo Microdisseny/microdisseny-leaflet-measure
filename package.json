@@ -46,9 +46,9 @@
     "husky": "^0.14.3",
     "i18n-webpack-plugin": "^1.0.0",
     "lint-staged": "^6.1.0",
-    "node-sass": "^4.7.2",
     "prettier": "^1.10.2",
-    "sass-loader": "^6.0.6",
+    "sass": "^1.32.12",
+    "sass-loader": "^7.1.0",
     "style-loader": "^0.20.1",
     "webpack": "^3.10.0",
     "webpack-dev-server": "^2.11.1"
